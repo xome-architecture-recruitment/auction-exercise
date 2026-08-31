@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Technical Exercise — Proxy Bidding</title>
+<style>
+  :root {
+    --ink:      #16232b;
+    --ink-soft: #55666e;
+    --paper:    #fcfbf8;
+    --rule:     #d8dcd6;
+    --accent:   #0d6a58;
+    --mark:     #f3ede0;
+
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --mono:  ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 18px;
+    line-height: 1.62;
+  }
+
+  .sheet { max-width: 42rem; margin: 0 auto; padding: 3.5rem 1.5rem 6rem; }
+
+  .lot { border-top: 3px solid var(--ink); padding-top: 1.25rem; }
+
+  .lot h1 {
+    font-size: clamp(2rem, 6vw, 2.9rem);
+    line-height: 1.1;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    margin: 0 0 0.6rem;
+  }
+
+  .lot p { margin: 0; color: var(--ink-soft); font-size: 1.05rem; }
+
+  .ledger { margin: 2.25rem 0 3rem; border-top: 1px solid var(--rule); }
+  .ledger dl { margin: 0; display: grid; grid-template-columns: 9.5rem 1fr; }
+  .ledger dt, .ledger dd { margin: 0; padding: 0.7rem 0; border-bottom: 1px solid var(--rule); }
+  .ledger dt { color: var(--ink-soft); font-size: 0.95rem; padding-right: 1rem; }
+  .ledger dd { font-size: 0.98rem; }
+
+  h2 {
+    font-size: 1.32rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 3rem 0 0.9rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  h3 { font-size: 1.05rem; font-weight: 600; margin: 1.8rem 0 0.5rem; }
+
+  p { margin: 0 0 1.1rem; }
+  ul { margin: 0 0 1.2rem; padding-left: 1.15rem; }
+  li { margin-bottom: 0.45rem; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--mark);
+    padding: 0.1em 0.36em;
+    border-radius: 2px;
+  }
+
+  .task {
+    border-left: 2px solid var(--accent);
+    padding: 0.1rem 0 0.1rem 1.1rem;
+    margin: 0 0 1.5rem;
+  }
+
+  .task .sig {
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+
+  .task p { margin: 0; }
+
+  /* Worked example — a ledger of events, so it reads as a running tally */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    margin: 0 0 0.9rem;
+  }
+
+  caption {
+    text-align: left;
+    font-family: var(--serif);
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    padding-bottom: 0.5rem;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--ink);
+    padding: 0.4rem 0.6rem 0.4rem 0;
+  }
+
+  td {
+    padding: 0.45rem 0.6rem 0.45rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+
+  td.num { text-align: right; padding-right: 1.2rem; white-space: nowrap; }
+  th.num { text-align: right; padding-right: 1.2rem; }
+
+  .aside {
+    background: var(--mark);
+    padding: 1.1rem 1.25rem;
+    margin: 1.6rem 0;
+    font-size: 0.98rem;
+  }
+
+  .aside p:last-child { margin-bottom: 0; }
+
+  ol.priority { counter-reset: step; list-style: none; margin: 0 0 1.2rem; padding: 0; }
+  ol.priority li { counter-increment: step; position: relative; padding-left: 2.1rem; margin-bottom: 0.4rem; }
+  ol.priority li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0.08em;
+    width: 1.45rem;
+    height: 1.45rem;
+    border: 1px solid var(--rule);
+    border-radius: 50%;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.4rem;
+    text-align: center;
+    color: var(--ink-soft);
+  }
+
+  .close {
+    margin-top: 3.5rem;
+    padding-top: 1.25rem;
+    border-top: 3px solid var(--ink);
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  @media (max-width: 32rem) {
+    body { font-size: 17px; }
+    .ledger dl { grid-template-columns: 1fr; }
+    .ledger dt { padding-bottom: 0; border-bottom: 0; }
+    .ledger dd { padding-top: 0.15rem; }
+    table { font-size: 0.74rem; }
+  }
+
+  @media print {
+    body { background: #fff; font-size: 10.5pt; }
+    .sheet { padding: 0; max-width: none; }
+    h2 { page-break-after: avoid; }
+    .task, .aside, table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main class="sheet">
+
+  <header class="lot">
+    <h1>Proxy bidding</h1>
+    <p>Technical exercise — Builder, Software Development Engineer</p>
+  </header>
+
+  <div class="ledger">
+    <dl>
+      <dt>Build time</dt>
+      <dd>50 minutes, live with us</dd>
+
+      <dt>Where</dt>
+      <dd><code>api/</code> — Java 21 + Spring Boot. Already runs.</dd>
+
+      <dt>Storage</dt>
+      <dd>In memory. No database.</dd>
+
+      <dt>AI assistance</dt>
+      <dd>Expected, not discouraged. Use whatever you normally use.</dd>
+
+      <dt>Frontend</dt>
+      <dd>Not a deliverable. You'll demo through it at the end.</dd>
+    </dl>
+  </div>
+
+  <h2>Context</h2>
+  <p>
+    Xome runs online auctions for residential properties. Bidders don't sit at
+    their screens for the whole auction, so we don't ask them for a bid — we ask
+    them for the <strong>most they're willing to pay</strong>. The system then
+    bids on their behalf, raising the price only as far as it needs to in order
+    to keep them in front.
+  </p>
+  <p>
+    This is the same mechanic used by most online auction platforms, and it is
+    the core of what you'll build.
+  </p>
+
+  <h2>How proxy bidding works</h2>
+  <p>
+    A bidder submits a maximum. The <em>current price</em> is not that maximum —
+    it's whatever is needed to beat the next-highest maximum, plus one increment.
+    A bidder's maximum is never revealed to anyone else, and the price never goes
+    above the leader's maximum.
+  </p>
+
+  <p>For this exercise the increment is a flat <code>$5,000</code>.</p>
+
+  <table>
+    <caption>Worked example — property starts at $250,000</caption>
+    <thead>
+      <tr>
+        <th>Event</th>
+        <th class="num">Price after</th>
+        <th>Leader</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Alice sets a maximum of $300,000</td>
+        <td class="num">250,000</td>
+        <td>Alice</td>
+      </tr>
+      <tr>
+        <td>Bob sets a maximum of $280,000</td>
+        <td class="num">285,000</td>
+        <td>Alice</td>
+      </tr>
+      <tr>
+        <td>Carla sets a maximum of $310,000</td>
+        <td class="num">305,000</td>
+        <td>Carla</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    Alice leads at the starting price because nobody is pushing her. Bob's
+    maximum pushes Alice up to one increment above it, but Bob still loses.
+    Carla outbids Alice, and the price lands one increment above Alice's
+    maximum.
+  </p>
+
+  <div class="aside">
+    <p>
+      The example above covers the ordinary case. It does not cover everything
+      that can happen. Working out what else can happen, and deciding what
+      should happen, is a large part of this exercise.
+    </p>
+  </div>
+
+  <h2>Two more rules</h2>
+
+  <h3>Reserve price</h3>
+  <p>
+    The seller sets a reserve. Until the price reaches it, the property will not
+    sell even if there are bids. Watchers need to be able to tell whether the
+    reserve has been met — but the reserve amount itself is confidential.
+  </p>
+
+  <h3>Duplicate submissions</h3>
+  <p>
+    Bids arrive from a mobile app on unreliable connections, and the app retries
+    on timeout. The same bid can therefore reach you more than once. A retry
+    must not have a different effect from the original request.
+  </p>
+
+  <h2>What to build</h2>
+
+  <div class="task">
+    <span class="sig">POST /api/auction/bids</span>
+    <p>Accept a bidder's maximum. Accept or reject it, and return something a client can act on.</p>
+  </div>
+
+  <div class="task">
+    <span class="sig">GET /api/auction/status</span>
+    <p>The current state of the auction, as a watcher is allowed to see it.</p>
+  </div>
+
+  <h2>What we've been told so far</h2>
+  <ul>
+    <li>Starting price and closing time are already in <code>AuctionStore</code>. Add the reserve yourself.</li>
+    <li>Bidders are identified by an ID that arrives with the request. No authentication needed.</li>
+    <li>A hot property can draw a few hundred bidders in the final minutes.</li>
+    <li>The business team wants to know at any time who is currently winning and what the current price is.</li>
+    <li>Operations needs to reconstruct what happened after the fact when a bidder complains their bid didn't go through, or that the price moved when it shouldn't have.</li>
+  </ul>
+
+  <div class="aside">
+    <p>
+      This spec is incomplete on purpose. Ask us what you need to know. Where we
+      don't have an answer, make a call and tell us what you decided.
+    </p>
+  </div>
+
+  <h2>What we'd like to see by the end</h2>
+  <ul>
+    <li>A working bid flow you can demo.</li>
+    <li><em>Four tests</em> covering the cases you think matter most. Which four you choose is part of what interests us.</li>
+    <li>Logging that would let someone reconstruct a disputed auction from the log alone.</li>
+    <li>Your reasoning about the data model. The starting classes are a suggestion, not a constraint — change them.</li>
+  </ul>
+
+  <h2>If you run short on time</h2>
+  <p>Work in this order:</p>
+  <ol class="priority">
+    <li>Bid endpoint with correct price calculation</li>
+    <li>Tests</li>
+    <li>Logging</li>
+    <li>Reserve and duplicate handling</li>
+  </ol>
+
+  <h2>At the end</h2>
+  <p>
+    Set <code>USE_MOCK = false</code> in <code>web/app/api.ts</code> and demo
+    your API through the UI. The client is already written. If its expectations
+    don't match what you built, that's worth talking about — it's not a mistake
+    on your part.
+  </p>
+
+  <h2>What we are not looking for</h2>
+  <ul>
+    <li>Persistence, deployment, authentication, or frontend code.</li>
+    <li>Completeness. A narrow slice done properly beats broad coverage.</li>
+    <li>Perfect code. We'd rather see you notice what's imperfect.</li>
+  </ul>
+
+  <p class="close">
+    Think out loud as you go. We're interested in how you decide, not only in
+    what you produce.
+  </p>
+
+</main>
+</body>
+</html>
