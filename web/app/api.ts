@@ -7,7 +7,7 @@
 
 export const BASE = "http://localhost:8080/api/auction";
 
-export const USE_MOCK = true;
+export const USE_MOCK = false;
 
 export type AuctionStatus = {
   currentPrice: number;

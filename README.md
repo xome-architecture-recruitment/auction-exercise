@@ -15,6 +15,13 @@ cd api
 mvn test
 ```
 
+No Maven on your machine? The project carries its own via the Maven wrapper —
+use `./mvnw test` (`mvnw.cmd test` on Windows) anywhere you'd use `mvn`. It
+downloads Maven 3.9.9 on first run and caches it under `~/.m2/wrapper`.
+
+Either way `JAVA_HOME` must point at a JDK 21 or newer — the build targets
+Java 21, and an older JDK fails with "release version 21 not supported".
+
 **Terminal 2 — frontend** (Next.js + TypeScript)
 
 ```
